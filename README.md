@@ -17,19 +17,52 @@ Fetches the latest BBC business & world news via RSS, then uses Groq AI (Llama 3
 - **BBC source links** on every story
 - **Deep link support** — `/index.html?country=LK`
 
-## Setup
+## Setup on a fresh VM or new machine
 
 ```bash
-# 1. Clone and install
+# 1. Clone the repo
+git clone <your-repo-url>
+cd asian-news-app-v2
+
+# 2. Install dependencies
 npm install
 
-# 2. Create .env from example
+# 3. Create your environment file
 cp .env.example .env
-# Add your GROQ_API_KEY from https://console.groq.com
 
-# 3. Start
+# 4. Fill in the required values in .env
+#    - NEWSDATA_API_KEY
+#    - GEMINI_API_KEY (optional but recommended)
+#    - MISTRAL_API_KEY (optional)
+#    - GROQ_API_KEY (optional)
+#    - YOUTUBE_* values (only if you want uploads)
+
+# 5. Start the web app
 npm start
 # → http://localhost:3022
+```
+
+## Run the video pipeline on the new VM
+
+```bash
+# Test without uploading
+npm run pipeline:test
+
+# Generate and upload one video
+npm run pipeline
+
+# Run the daily batch with a 5-minute break between stories
+npm run daily -- --break 5
+```
+
+## If you push to GitHub and clone elsewhere
+
+- Do not commit your real .env file.
+- Copy [.env.example](.env.example) to .env on the new machine.
+- If you want YouTube uploads on the new VM, run this once after setting the YouTube credentials:
+
+```bash
+npm run youtube:auth
 ```
 
 ## API Endpoints
