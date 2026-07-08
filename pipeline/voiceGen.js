@@ -2,9 +2,17 @@
 // No API key needed. Server-side only (not browser).
 // Uses msedge-tts npm package.
 
-import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
-import { writeFile, mkdir } from "fs/promises";
+import { mkdir } from "fs/promises";
 import path from "path";
+import { webcrypto as nodeWebCrypto } from "node:crypto";
+
+if (!globalThis.crypto) {
+  globalThis.crypto = nodeWebCrypto;
+}
+
+async function loadMsEdgeTTS() {
+  return import("msedge-tts");
+}
 
 const OUTPUT_DIR = new URL("output/audio", import.meta.url).pathname;
 
@@ -26,6 +34,7 @@ export async function generateVoice(script, runId, voiceKey = "british") {
   console.log(`[TTS] Text length: ${script.fullText.length} chars (~${script.wordCount} words)`);
 
   try {
+    const { MsEdgeTTS, OUTPUT_FORMAT } = await loadMsEdgeTTS();
     const tts = new MsEdgeTTS();
     await tts.setMetadata(voice, OUTPUT_FORMAT.AUDIO_24KHZ_96KBITRATE_MONO_MP3);
 
@@ -64,6 +73,7 @@ export async function generateVoice(script, runId, voiceKey = "british") {
 export async function generateVoiceSections(script, countryCode) {
   await mkdir(OUTPUT_DIR, { recursive: true });
 
+  const { MsEdgeTTS, OUTPUT_FORMAT } = await loadMsEdgeTTS();
   const voice = VOICES.british;
   const tts   = new MsEdgeTTS();
   await tts.setMetadata(
