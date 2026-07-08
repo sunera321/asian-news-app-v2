@@ -1,0 +1,32 @@
+{
+  "name": "asia-economic-lens",
+  "version": "2.0.0",
+  "type": "module",
+  "description": "BBC Economic News — Impact across Asian countries",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "pipeline": "node pipeline/run.js",
+    "pipeline:test": "node pipeline/run.js --no-upload",
+    "pipeline:private": "node pipeline/run.js --private",
+    "pipeline:schedule": "node pipeline/run.js --schedule",
+    "youtube:auth": "node pipeline/youtubeUploader.js --auth",
+    "pipeline:long": "node pipeline/run.js --format long",
+    "pipeline:3videos": "node pipeline/run.js --count 3",
+    "add-music": "node pipeline/addMusic.js",
+    "add-music:preview": "node pipeline/addMusic.js --preview",
+    "add-music:loud": "node pipeline/addMusic.js --volume 0.15",
+    "add-music:quiet": "node pipeline/addMusic.js --volume 0.04",
+    "daily": "node pipeline/daily.js",
+    "daily:dry": "node pipeline/daily.js --dry-run",
+    "daily:3": "node pipeline/daily.js --stories 1,2,3 --dry-run"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.19.2",
+    "groq-sdk": "^0.5.0",
+    "rss-parser": "^3.13.0",
+    "msedge-tts": "^2.0.6"
+  }
+}
