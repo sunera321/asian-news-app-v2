@@ -133,52 +133,54 @@ app.get("/api/image", async (req, res) => {
   res.status(502).send("Image unavailable");
 });
 
-// ── /api/cache/clear — dev tool ─────────────────────────────
-app.get("/api/cache/clear", (_req, res) => {
-  countryCache.clear(); newsCache = null; newsCacheTime = 0;
-  res.json({ message: "Cache cleared" });
-});
+// ── Dev-only tools — disabled when NODE_ENV=production ──────
+if (process.env.NODE_ENV !== "production") {
+  // /api/cache/clear
+  app.get("/api/cache/clear", (_req, res) => {
+    countryCache.clear(); newsCache = null; newsCacheTime = 0;
+    res.json({ message: "Cache cleared" });
+  });
 
-// ── /api/debug-news — show raw news data including image URLs ──
-app.get("/api/debug-news", async (req, res) => {
-  try {
-    if (!newsCache) {
-      newsCache     = await fetchHeadlines(10);
-      newsCacheTime = Date.now();
+  // /api/debug-news — show raw news data including image URLs
+  app.get("/api/debug-news", async (req, res) => {
+    try {
+      if (!newsCache) {
+        newsCache     = await fetchHeadlines(10);
+        newsCacheTime = Date.now();
+      }
+      res.json(newsCache.map(a => ({
+        title: a.title?.slice(0, 60),
+        image: a.image,
+      })));
+    } catch(e) {
+      res.status(500).json({ error: e.message });
     }
-    res.json(newsCache.map(a => ({
-      title: a.title?.slice(0, 60),
-      image: a.image,
-    })));
-  } catch(e) {
-    res.status(500).json({ error: e.message });
-  }
-});
+  });
 
-// ── /api/debug-image — test if THIS SERVER can reach Pollinations.AI ──
-// Visit http://localhost:3022/api/debug-image to check server-side network access
-app.get("/api/debug-image", async (req, res) => {
-  const testUrl = "https://image.pollinations.ai/prompt/test?width=64&height=64&nologo=true";
-  const result = { testUrl, timestamp: new Date().toISOString() };
+  // /api/debug-image — test if THIS SERVER can reach Pollinations.AI
+  app.get("/api/debug-image", async (req, res) => {
+    const testUrl = "https://image.pollinations.ai/prompt/test?width=64&height=64&nologo=true";
+    const result = { testUrl, timestamp: new Date().toISOString() };
 
-  try {
-    const start = Date.now();
-    const r = await fetch(testUrl, { signal: AbortSignal.timeout(10000) });
-    result.serverReachable = r.ok;
-    result.httpStatus      = r.status;
-    result.responseTimeMs  = Date.now() - start;
-    result.contentType     = r.headers.get("content-type");
-    result.message = r.ok
-      ? "✅ Server CAN reach Pollinations.AI. If browser still can't load images, it's a client-side network/firewall/extension issue, not a server issue."
-      : `⚠️ Server reached Pollinations but got HTTP ${r.status} — service may be degraded.`;
-  } catch (err) {
-    result.serverReachable = false;
-    result.error = err.message;
-    result.message = "❌ Server CANNOT reach Pollinations.AI. This means your server's network/firewall is blocking image.pollinations.ai. Check firewall rules, VPN, or corporate proxy settings.";
-  }
+    try {
+      const start = Date.now();
+      const r = await fetch(testUrl, { signal: AbortSignal.timeout(10000) });
+      result.serverReachable = r.ok;
+      result.httpStatus      = r.status;
+      result.responseTimeMs  = Date.now() - start;
+      result.contentType     = r.headers.get("content-type");
+      result.message = r.ok
+        ? "✅ Server CAN reach Pollinations.AI. If browser still can't load images, it's a client-side network/firewall/extension issue, not a server issue."
+        : `⚠️ Server reached Pollinations but got HTTP ${r.status} — service may be degraded.`;
+    } catch (err) {
+      result.serverReachable = false;
+      result.error = err.message;
+      result.message = "❌ Server CANNOT reach Pollinations.AI. This means your server's network/firewall is blocking image.pollinations.ai. Check firewall rules, VPN, or corporate proxy settings.";
+    }
 
-  res.json(result);
-});
+    res.json(result);
+  });
+}
 
 app.listen(PORT, () =>
   console.log(`🌏 Asia Economic Lens → http://localhost:${PORT}`)

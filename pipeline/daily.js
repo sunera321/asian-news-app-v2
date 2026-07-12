@@ -1,15 +1,21 @@
 #!/usr/bin/env node
-// daily.js — Full daily pipeline: 10 videos, music, YouTube upload
+// daily.js — Full daily pipeline: 6 videos, music, YouTube upload
+//
+// Default story count is capped at 6 to stay under the YouTube Data API's
+// default free quota (10,000 units/day; each upload costs 1,600 units —
+// 6 uploads = 9,600 units, just under the limit).
 //
 // Usage:
-//   node pipeline/daily.js                  # run all 10 stories
+//   node pipeline/daily.js                  # run all 6 stories
 //   node pipeline/daily.js --dry-run        # generate + music, skip upload
 //   node pipeline/daily.js --stories 1,3,5  # specific story numbers only
 //   node pipeline/daily.js --start 1        # start from story #1 (resume)
 //   node pipeline/daily.js --break 10       # custom break in minutes (default 10)
 //
-// Cron example (run every day at 1:30 AM):
-//   30 1 * * * cd /home/sunera/Desktop/Script/news/world-economic-briefing-FINAL/asian-news-app-v2 && node pipeline/daily.js >> logs/daily.log 2>&1
+// NOTE: for the actual production schedule we run single-video invocations
+// of run.js at specific times of day (see crontab) to spread uploads across
+// UK/US peak hours instead of batching them all at once. This script is kept
+// for manual/ad-hoc batch runs and testing.
 
 import dotenv from "dotenv";
 dotenv.config();
@@ -46,8 +52,8 @@ const storiesArg  = argMap.stories
   ? argMap.stories.split(",").map(n => parseInt(n.trim()))
   : null;
 
-// Stories to process: either specific list, or 1–10 starting from --start
-const storyNums = storiesArg || Array.from({ length: 10 }, (_, i) => i + startFrom);
+// Stories to process: either specific list, or 1–6 starting from --start
+const storyNums = storiesArg || Array.from({ length: 6 }, (_, i) => i + startFrom);
 
 // ── Logging ───────────────────────────────────────────────
 const logFile = path.join(LOG_DIR, `daily_${dateStamp()}.log`);

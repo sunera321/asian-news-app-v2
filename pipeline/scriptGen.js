@@ -304,15 +304,23 @@ function buildTitle(hook, fmt) {
   const date = new Date().toLocaleDateString("en-US", {
     month: "short", day: "numeric", year: "numeric",
   });
-  // Use first 8 words of hook as title — more clickable than generic
-  const hookWords = hook
-    .replace(/[“”"]/g, "")
-    .split(/\s+/)
-    .slice(0, 8)
-    .join(" ")
-    .trim();
-  const suffix = fmt.label === "Shorts" ? " #Shorts" : "";
-  return `${hookWords} | ${date}${suffix}`.slice(0, 100);
+  const cleanHook = String(hook).replace(/[“”"]/g, "").trim();
+  const shortsTag = fmt.label === "Shorts" ? " #Shorts" : "";
+
+  // Prefer the full hook (it's already a short, complete question) with the
+  // date attached. Only fall back to trimming — on a word boundary, never
+  // mid-clause — if it genuinely doesn't fit YouTube's 100-char title limit.
+  const withDate = `${cleanHook} | ${date}${shortsTag}`;
+  if (withDate.length <= 100) return withDate;
+
+  const withoutDate = `${cleanHook}${shortsTag}`;
+  if (withoutDate.length <= 100) return withoutDate;
+
+  const budget = 100 - shortsTag.length - 1; // leave room for the ellipsis
+  const truncated = cleanHook.slice(0, budget);
+  const lastSpace = truncated.lastIndexOf(" ");
+  const safeHook = lastSpace > 0 ? truncated.slice(0, lastSpace) : truncated;
+  return `${safeHook}…${shortsTag}`;
 }
 
 function buildDescription(fullText, sections) {

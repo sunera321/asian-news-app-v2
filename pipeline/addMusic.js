@@ -9,7 +9,7 @@
 //   node pipeline/addMusic.js --video vid.mp4 --preview   # preview 10s before full render
 
 import { exec, execSync } from "child_process";
-import { existsSync, readdirSync, statSync } from "fs";
+import { existsSync, readdirSync, statSync, copyFileSync } from "fs";
 import { promisify } from "util";
 import path from "path";
 import { fileURLToPath, pathToFileURL } from "url";
@@ -149,6 +149,16 @@ export async function addBackgroundMusic(videoPath, options = {}) {
 
   if (!existsSync(outPath)) {
     throw new Error("Output file not created. ffmpeg error:\n" + stderr.slice(-500));
+  }
+
+  // Carry the metadata sidecar (title/description/tags) over to the _music
+  // filename — otherwise youtubeUploader.js can't find it and falls back to
+  // a filename-derived title when uploading this file.
+  const metadataPath = resolvedVideoPath.replace(/\.mp4$/i, ".json");
+  const outMetadataPath = outPath.replace(/\.mp4$/i, ".json");
+  if (existsSync(metadataPath) && metadataPath !== outMetadataPath) {
+    copyFileSync(metadataPath, outMetadataPath);
+    if (!quiet) console.log(`📄 Metadata carried over: ${path.basename(outMetadataPath)}`);
   }
 
   const sizeMB  = (statSync(outPath).size / 1024 / 1024).toFixed(1);
